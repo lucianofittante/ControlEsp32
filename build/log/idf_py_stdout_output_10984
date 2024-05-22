@@ -1,0 +1,9 @@
+-- ccache will be used for faster recompilation
+-- git rev-parse returned 'fatal: not a git repository (or any of the parent directories): .git'
+-- Could not use 'git describe' to determine PROJECT_VER.
+-- Building ESP-IDF components for target esp32
+Processing 2 dependencies:
+[1/2] espressif/mdns (1.2.5)
+[2/2] idf (5.1.2)
+-- Configuring incomplete, errors occurred!
+See also "C:/Users/lucho/Desktop/ReparandoSTA/project-name/build/CMakeFiles/CMakeOutput.log".
