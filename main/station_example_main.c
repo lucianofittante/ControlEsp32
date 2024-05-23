@@ -46,6 +46,8 @@
 #include "esp_sntp.h"
 #include "esp_log.h"
 #include "time.h"
+#include "esp_http_client.h"
+
 
 
 //static esp_websocket_client_handle_t clientws = NULL;
@@ -105,6 +107,7 @@ static EventGroupHandle_t s_wifi_event_group;
 
 static const char *TAG = "ESP";
 static const char *TAGMQTT = "INFO_MQTT";
+static const char *TAGHTTP = "HTTP_CLIENT";
 
 
 
@@ -215,6 +218,28 @@ void get_current_time(char *time_buf, size_t buf_size) {
 
   //  printf("Current time: %s\n", time_buf);
 }
+/*
+void send_to_google_script(int temperature, int humidity, int humedadsuelo, int regar, int alarmariego) {
+    char url[215];
+    snprintf(url, sizeof(url),
+             "https://script.google.com/macros/s/AKfycbxEJTNETVCx7Tq-OGqELHjMkrjLdjGOxh5WMe7d6qvnc00O7ixbq_dQGmIbEA_Y6jkT/exec?Temp=%d&HumAmb=%d&HumSue=%d&Regar=%d&AlarmaRiego=%d",
+             temperature, humidity, humedadsuelo, regar, alarmariego);
+
+    esp_http_client_config_t config = {
+        .url = url,
+    };
+
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+
+    esp_err_t err = esp_http_client_perform(client);
+    if (err == ESP_OK) {
+        ESP_LOGI(TAGHTTP, "HTTP GET request sent successfully");
+    } else {
+        ESP_LOGE(TAGHTTP, "HTTP GET request failed: %s", esp_err_to_name(err));
+    }
+
+    esp_http_client_cleanup(client);
+}*/
 void publish_sensor_state(esp_mqtt_client_handle_t client) {
     char message[16];
 
@@ -238,7 +263,7 @@ void publish_sensor_state(esp_mqtt_client_handle_t client) {
     msg_id = esp_mqtt_client_publish(client, "humedadsuelo", message, 0, 0, 0);
     ESP_LOGI(TAGMQTT, "sent publish humedadsuelo, msg_id=%d", msg_id);
 
-     // Get current time
+    // Get current time
     char current_time[9];
     get_current_time(current_time, sizeof(current_time));
 
@@ -246,7 +271,11 @@ void publish_sensor_state(esp_mqtt_client_handle_t client) {
     snprintf(message, sizeof(message), "%s", current_time);
     msg_id = esp_mqtt_client_publish(client, "current_tiempo", message, 0, 0, 0);
     ESP_LOGI(TAGMQTT, "sent publish current_time, msg_id=%d", msg_id);
+
+   // send_to_google_script(temperature, humidity, humedadsuelo, regar, alarmariego);
+
 }
+
 
 void leer_Dht(){
     
@@ -1044,7 +1073,7 @@ void http_server_task(void *pvParameter)
                     httpd_register_uri_handler(server, &post_uri);
                                                                  
                     httpd_uri_t root_codejs = {
-                        .uri = "/code2.js",
+                        .uri = "/code.js",
                         .method = HTTP_GET,
                         .handler = root_codejs_handler,
                         .user_ctx = NULL

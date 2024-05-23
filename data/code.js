@@ -45,10 +45,6 @@ function toggleRegar() {
     });
 }
 
-
-
-// Evento al cargar la página para obtener y mostrar el estado actual del LED y el valor del potenciómetro
 window.onload = function() {
-  
-
-        };
+    console.log('Page loaded, updating values...');
+};
