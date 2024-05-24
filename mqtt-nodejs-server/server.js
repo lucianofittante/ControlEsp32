@@ -125,3 +125,29 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// API endpoint to fetch data for charts
+app.get('/datagraf', (req, res) => {
+  const query = `
+    SELECT temperature, humidity, humedadsuelo
+    FROM sensors
+    ORDER BY id DESC
+    LIMIT 25
+  `;
+
+  pool.query(query, (err, results) => {
+    if (err) {
+      console.error('Failed to fetch data from the database:', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+
+    const data = {
+      temperature: results.map(row => row.temperature),
+      humidity: results.map(row => row.humidity),
+      humidity_land: results.map(row => row.humedadsuelo)
+    };
+
+    res.json(data);
+  });
+});
+
