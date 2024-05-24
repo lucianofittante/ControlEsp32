@@ -352,28 +352,6 @@ esp_err_t send_datagraf(httpd_req_t *req) {
     
     return ESP_OK;
 }
-/*static esp_err_t root_sensor_handler(httpd_req_t *req)
-{
-    // Leer el valor del potenciómetro
-    val = adc1_get_raw(ADC1_CHANNEL_4) / 41;
-
-    ESP_LOGI(TAG, "Valor del sensor desde root_sensor_handler: %d", val);
-
-    if(val<50){led_blink2=0;}
-    if(val>50){led_blink2=1;}
-
-    // Crear un buffer para contener la respuesta HTTP
-    char buf[32];
-    snprintf(buf, sizeof(buf), "%d", val);
-
-    // Configurar la respuesta HTTP con el tipo de contenido adecuado
-    httpd_resp_set_type(req, "text/plain");
-
-    // Enviar la respuesta HTTP con el valor del potenciómetro
-    httpd_resp_send(req, buf, strlen(buf));
-
-    return ESP_OK;
-}*/
 void pin_config()
 {
     gpio_set_pull_mode(CONFIGURAR, GPIO_PULLUP_ONLY);
