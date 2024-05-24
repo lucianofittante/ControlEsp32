@@ -107,7 +107,6 @@ static EventGroupHandle_t s_wifi_event_group;
 
 static const char *TAG = "ESP";
 static const char *TAGMQTT = "INFO_MQTT";
-static const char *TAGHTTP = "HTTP_CLIENT";
 
 
 
@@ -274,6 +273,9 @@ void initialize_sntp(void) {
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, "pool.ntp.org"); // Set NTP server
     sntp_init();
+
+    setenv("TZ", "ART3", 1); // ART is Argentina Time, and 3 hours behind UTC
+    tzset(); // Apply the time zone setting
 }
 void update_time_task(void *pvParameters) { 
     time_t now;
@@ -973,10 +975,6 @@ void timer_callback(TimerHandle_t xTimer) {
     leer_Dht();
     leerHumedadSuelo();
     register_data_callback();
-
-    printf("humedad suelo %d ",humedadsuelo);
-    printf("alarma %d ",alarmariego);
-
     }
 void http_server_task(void *pvParameter)
 {

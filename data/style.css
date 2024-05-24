@@ -7,7 +7,7 @@ html {
 h1 {
     color: #0F3376;
     padding: 0.5vh;
-    margin-right: 35px; /* Ajusta el valor según sea necesario */
+    /*margin-right: 35px;  Ajusta el valor según sea necesario */
     text-align: center; /* Para mantener el texto centrado horizontalmente */
 }
 p {
@@ -74,7 +74,7 @@ td {
 }
 .container {
     display: flex;
-    justify-content: space-between;
+  /*  justify-content: space-between;*/
     align-items: flex-start;
 }
 .left-container {
@@ -89,4 +89,4 @@ td {
 .lista-graficas{
     width: 200px;
 }
-    
+
