@@ -46,7 +46,6 @@
 #include "esp_sntp.h"
 #include "esp_log.h"
 #include "time.h"
-#include "esp_http_client.h"
 
 
 
@@ -249,8 +248,6 @@ void publish_sensor_state(esp_mqtt_client_handle_t client) {
     msg_id = esp_mqtt_client_publish(client, "current_tiempo", message, 0, 0, 0);
     ESP_LOGI(TAGMQTT, "sent publish current_time, msg_id=%d", msg_id);
 
-
-
 }
 void leer_Dht(){
     
@@ -435,7 +432,7 @@ void print_file_content(const char *filename) {
 esp_err_t read_password()
 {
 
-    FILE *file = fopen("/storage/config.json", "rb");
+    FILE *file = fopen("/storage/config2.json", "rb");
     if (file == NULL)
     {
         ESP_LOGE(TAG, "Error al abrir el archivo config2.json");
@@ -866,9 +863,9 @@ esp_err_t save_config_to_file(const char *ssid, const char *password)
         return ESP_FAIL;
     }
 
-    FILE *file = fopen("/storage/config2.json", "w");
+    FILE *file = fopen("/storage/config.json", "w");
     if (file == NULL) {
-        ESP_LOGE(TAG, "Error abriendo archivo config2.json para escritura");
+        ESP_LOGE(TAG, "Error abriendo archivo config.json para escritura");
         free(json_str);
         cJSON_Delete(root);
         return ESP_FAIL;
@@ -1066,9 +1063,7 @@ void http_server_task(void *pvParameter)
 
 void app_main(void)
 {
-    
     // INICIALIZACION GLOBAL DE LA ESP
-
     pin_config();    
     init_spiffs();    
     read_password();    
@@ -1076,13 +1071,10 @@ void app_main(void)
     set_adc();
     leerHumedadSuelo(); 
     initialize_sntp();
-
     // configuracion del DMS//
     mdns_init();
     mdns_hostname_set("esp");
-
     // INICIALIZACION DEL SISTEMA MQTT
-
     ESP_LOGI(TAGMQTT, "[APP] Startup..");
     ESP_LOGI(TAGMQTT, "[APP] Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
     ESP_LOGI(TAGMQTT, "[APP] IDF version: %s", esp_get_idf_version());
