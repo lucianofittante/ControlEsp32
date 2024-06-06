@@ -46,6 +46,8 @@
 #include "esp_sntp.h"
 #include "esp_log.h"
 #include "time.h"
+#include "esp_event.h"
+
 
 
 
@@ -138,7 +140,7 @@ void register_data_callback(void) {  // Registra los valores en la RAM
 
     printf("Hour %d - Temp: %d, Humidity: %d, Humidity Land: %d\n", current_index, temperaturegraf[current_index], humiditygraf[current_index], humidity_landgraf[current_index]);
 
-    current_index++; 
+    current_index++;
     if(current_index>25){current_index=0;}           
 
 
@@ -149,6 +151,7 @@ static void log_error_if_nonzero(const char *message, int error_code)
         ESP_LOGE(TAGMQTT, "Last error %s: 0x%x", message, error_code);
     }
 }
+//////////////////////////////////////
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data){
     ESP_LOGD(TAGMQTT, "Event dispatched from event loop base=%s, event_id=%" PRIi32, base, event_id);
     esp_mqtt_event_handle_t event = event_data;
@@ -194,16 +197,17 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         ESP_LOGI(TAGMQTT, "Other event id:%d", event->event_id);
         break;
     }}
+//////////////////////////////////
 static void mqtt_app_start(void)
 {
     const esp_mqtt_client_config_t mqtt_cfg = {
-        .broker.address.uri = "ws://test.mosquitto.org:8080/mqtt",
-        .credentials.authentication.password = "",
+        .broker.address.uri = "ws://test.mosquitto.org:8080/mqtt", // Replace with your local broker's IP address and port
+        .credentials.authentication.password = "",         // If your broker requires authentication, provide the credentials here
         .credentials.username = ""
     };
 
     client = esp_mqtt_client_init(&mqtt_cfg);
-   
+
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
 }
@@ -279,7 +283,6 @@ void update_time_task(void *pvParameters) {
     struct tm timeinfo;
 
     while (1) {
-        // Wait for time to be set
         time(&now);
         localtime_r(&now, &timeinfo);
         if (timeinfo.tm_year >= (2021 - 1900)) {
@@ -288,11 +291,20 @@ void update_time_task(void *pvParameters) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 
-    // Main loop to update time
+    // Main loop to update time and check for hourly update
     while (1) {
         time(&now);
         localtime_r(&now, &timeinfo);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        // Check if it's the top of the hour (minute == 0)
+        if ( timeinfo.tm_min == 0 && timeinfo.tm_sec == 0) { //timeinfo.tm_min == 0 &&
+            register_data_callback();
+            // Wait for a minute to avoid multiple triggers within the same minute
+            vTaskDelay(60000 / portTICK_PERIOD_MS);
+        } else {
+            // Wait for one second before checking the time again
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
     }
 }
 esp_err_t send_data(httpd_req_t *req) { //  This function send data to the website
@@ -971,7 +983,6 @@ void timer_callback(TimerHandle_t xTimer) {
     publish_sensor_state(client);
     leer_Dht();
     leerHumedadSuelo();
-    register_data_callback();
     }
 void http_server_task(void *pvParameter)
 {
@@ -1090,11 +1101,11 @@ void app_main(void)
     mqtt_app_start();
     
     TimerHandle_t xTimer = xTimerCreate(
-    "MyTimer",              // Nombre del temporizador
-    pdMS_TO_TICKS(2000),     // Periodo de 500ms convertido a ticks
-    pdTRUE,                 // Modo de temporizador repetitivo
-    NULL,                   // Parámetro de la función de devolución de llamada
-    timer_callback          // Función de devolución de llamada
+    "MyTimer",                  // Nombre del temporizador
+    pdMS_TO_TICKS(2000),        // Periodo de 500ms convertido a ticks
+    pdTRUE,                     // Modo de temporizador repetitivo
+    NULL,                       // Parámetro de la función de devolución de llamada
+    timer_callback              // Función de devolución de llamada
 );
     xTimerStart(xTimer, 0);
   
