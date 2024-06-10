@@ -16,10 +16,10 @@ p {
 body {
     text-align: center;
 }
-.container {
-    display: inline-block;
+/*.container {
+    display: inline-flex;
     text-align: center;
-}
+}*/
 table {
     margin: 0 auto;
     text-align: center;
@@ -90,3 +90,7 @@ td {
     width: 200px;
 }
 
+.chart-container {
+    transform: scale(0.7); /* Scale down the chart to 70% of its original size */
+    transform-origin: top left; /* Ensure scaling is anchored to the top left */
+}

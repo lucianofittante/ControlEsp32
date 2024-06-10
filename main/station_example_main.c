@@ -125,15 +125,85 @@ bool alarmariego;
 static esp_mqtt_client_handle_t client;
 struct dht11_reading dht11_data;
 
-#define NUM_VALUES_PER_DAY 24
+#define NUM_VALUES_PER_DAY 96
+#define MAX_VALUES 96
+
+
+#define FILE_PATH "/storage/data.json"
+#define NUM_VALUES 96 // Assuming you have 96 values stored
+#define VALUES_TO_SEND 24 // Send the last 24 values
+
 
 int temperaturegraf[NUM_VALUES_PER_DAY];
 int humiditygraf[NUM_VALUES_PER_DAY];
 int humidity_landgraf[NUM_VALUES_PER_DAY];
 int current_index = 0;
 
-void register_data_callback(void) {  // Registra los valores en la RAM
- 
+
+esp_err_t send_datagraficas(httpd_req_t *req) {
+    FILE *file = fopen("/storage/data.json", "r");
+    if (file == NULL) {
+        ESP_LOGE(TAG, "Failed to open file for reading");
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to open file");
+        return ESP_FAIL;
+    }
+
+    // Get the file size
+    fseek(file, 0, SEEK_END);
+    size_t file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    // Allocate memory for the file content
+    char *file_content = (char *)malloc(file_size + 1);
+    if (file_content == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for file content");
+        fclose(file);
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to allocate memory");
+        return ESP_FAIL;
+    }
+
+    // Read the file content
+    fread(file_content, 1, file_size, file);
+    fclose(file);
+    file_content[file_size] = '\0'; // Null-terminate the string
+
+    // Set the content type and send the response
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, file_content, file_size);
+
+    free(file_content);
+    return ESP_OK;
+}
+
+
+void save_to_spiffs() {
+    cJSON *root = cJSON_CreateObject();
+    cJSON *temperature_array = cJSON_CreateIntArray(temperaturegraf, MAX_VALUES);
+    cJSON *humidity_array = cJSON_CreateIntArray(humiditygraf, MAX_VALUES);
+    cJSON *humidity_land_array = cJSON_CreateIntArray(humidity_landgraf, MAX_VALUES);
+
+    cJSON_AddItemToObject(root, "temperature", temperature_array);
+    cJSON_AddItemToObject(root, "humidity", humidity_array);
+    cJSON_AddItemToObject(root, "humidity_land", humidity_land_array);
+
+    char *json_data = cJSON_Print(root);
+
+    // Save JSON data to SPIFFS
+    FILE *file = fopen("/storage/data.json", "w");
+    if (file == NULL) {
+        ESP_LOGE("SPIFFS", "Failed to open file for writing");
+        cJSON_Delete(root);
+        free(json_data);
+        return;
+    }
+    fprintf(file, "%s", json_data);
+    fclose(file);
+
+    cJSON_Delete(root);
+    free(json_data);
+}
+
+void register_data_callback(void) {
     temperaturegraf[current_index] = temperature;
     humiditygraf[current_index] = humidity;
     humidity_landgraf[current_index] = humedadsuelo;
@@ -141,9 +211,14 @@ void register_data_callback(void) {  // Registra los valores en la RAM
     printf("Hour %d - Temp: %d, Humidity: %d, Humidity Land: %d\n", current_index, temperaturegraf[current_index], humiditygraf[current_index], humidity_landgraf[current_index]);
 
     current_index++;
-    if(current_index>25){current_index=0;}           
+    if (current_index >= MAX_VALUES) {
+        current_index = 0;
+    }
 
-
+    // Save the data to SPIFFS periodically
+   // if (current_index % 24 == 0) {  // Save every 24 updates
+        save_to_spiffs();
+   // }
 }
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -327,7 +402,7 @@ esp_err_t send_data(httpd_req_t *req) { //  This function send data to the websi
     
     return ESP_OK;
 }
-esp_err_t send_datagraf(httpd_req_t *req) {
+/*esp_err_t send_datagraf(httpd_req_t *req) {
     // Set content type to application/json
     httpd_resp_set_type(req, "application/json");
     // Set cache control to no-cache
@@ -361,6 +436,90 @@ esp_err_t send_datagraf(httpd_req_t *req) {
     // Send the JSON
     httpd_resp_send(req, json_buf, strlen(json_buf));
     
+    return ESP_OK;
+}*/
+esp_err_t send_datagraf(httpd_req_t *req) {
+    // Set content type to application/json
+    httpd_resp_set_type(req, "application/json");
+    // Set cache control to no-cache
+    httpd_resp_set_hdr(req, "Cache-Control", "no-cache");
+    
+    // Read the JSON file from SPIFFS
+    FILE *file = fopen(FILE_PATH, "r");
+    if (!file) {
+        ESP_LOGE(TAG, "Failed to open file for reading");
+        httpd_resp_send_500(req);
+        return ESP_FAIL;
+    }
+
+    // Get file size
+    struct stat file_stat;
+    if (stat(FILE_PATH, &file_stat) != 0) {
+        ESP_LOGE(TAG, "Failed to get file stats");
+        fclose(file);
+        httpd_resp_send_500(req);
+        return ESP_FAIL;
+    }
+
+    char *file_content = malloc(file_stat.st_size + 1);
+    if (!file_content) {
+        ESP_LOGE(TAG, "Failed to allocate memory");
+        fclose(file);
+        httpd_resp_send_500(req);
+        return ESP_FAIL;
+    }
+
+    fread(file_content, 1, file_stat.st_size, file);
+    fclose(file);
+    file_content[file_stat.st_size] = '\0';
+
+    // Parse the JSON data
+    cJSON *json = cJSON_Parse(file_content);
+    if (!json) {
+        ESP_LOGE(TAG, "Failed to parse JSON");
+        free(file_content);
+        httpd_resp_send_500(req);
+        return ESP_FAIL;
+    }
+    free(file_content);
+
+    cJSON *temperature = cJSON_GetObjectItem(json, "temperature");
+    cJSON *humidity = cJSON_GetObjectItem(json, "humidity");
+    cJSON *humidity_land = cJSON_GetObjectItem(json, "humidity_land");
+    if (!temperature || !humidity || !humidity_land) {
+        ESP_LOGE(TAG, "Invalid JSON format");
+        cJSON_Delete(json);
+        httpd_resp_send_500(req);
+        return ESP_FAIL;
+    }
+
+  // Create a new JSON object to hold the first 24 values
+    cJSON *new_json = cJSON_CreateObject();
+    cJSON *new_temperature = cJSON_CreateArray();
+    cJSON *new_humidity = cJSON_CreateArray();
+    cJSON *new_humidity_land = cJSON_CreateArray();
+
+    for (int i = 0; i < VALUES_TO_SEND; i++) {
+        cJSON_AddItemToArray(new_temperature, cJSON_CreateNumber(cJSON_GetArrayItem(temperature, i)->valueint));
+        cJSON_AddItemToArray(new_humidity, cJSON_CreateNumber(cJSON_GetArrayItem(humidity, i)->valueint));
+        cJSON_AddItemToArray(new_humidity_land, cJSON_CreateNumber(cJSON_GetArrayItem(humidity_land, i)->valueint));
+    }
+
+    cJSON_AddItemToObject(new_json, "temperature", new_temperature);
+    cJSON_AddItemToObject(new_json, "humidity", new_humidity);
+    cJSON_AddItemToObject(new_json, "humidity_land", new_humidity_land);
+
+    // Convert the new JSON object to a string
+    char *json_string = cJSON_Print(new_json);
+
+    // Send the JSON string
+    httpd_resp_send(req, json_string, strlen(json_string));
+
+    // Free resources
+    cJSON_Delete(new_json);
+    cJSON_Delete(json);
+    free(json_string);
+
     return ESP_OK;
 }
 void pin_config()
@@ -983,6 +1142,7 @@ void timer_callback(TimerHandle_t xTimer) {
     publish_sensor_state(client);
     leer_Dht();
     leerHumedadSuelo();
+    register_data_callback();
     }
 void http_server_task(void *pvParameter)
 {
@@ -1063,6 +1223,14 @@ void http_server_task(void *pvParameter)
                         .user_ctx  = NULL
                     };
                     httpd_register_uri_handler(server, &send_datagraf_uri_get);
+
+                    httpd_uri_t send_datagraficas_uri_get = {
+                        .uri       = "/datagraficas",
+                        .method    = HTTP_GET,
+                        .handler   = send_datagraficas,
+                        .user_ctx  = NULL
+                    };
+                    httpd_register_uri_handler(server, &send_datagraficas_uri_get);
 
                       while (1)
         {
