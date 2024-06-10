@@ -174,8 +174,6 @@ esp_err_t send_datagraficas(httpd_req_t *req) {
     free(file_content);
     return ESP_OK;
 }
-
-
 void save_to_spiffs() {
     cJSON *root = cJSON_CreateObject();
     cJSON *temperature_array = cJSON_CreateIntArray(temperaturegraf, MAX_VALUES);
@@ -202,7 +200,6 @@ void save_to_spiffs() {
     cJSON_Delete(root);
     free(json_data);
 }
-
 void register_data_callback(void) {
     temperaturegraf[current_index] = temperature;
     humiditygraf[current_index] = humidity;
@@ -216,9 +213,9 @@ void register_data_callback(void) {
     }
 
     // Save the data to SPIFFS periodically
-   // if (current_index % 24 == 0) {  // Save every 24 updates
+    if (current_index % 24 == 0) {  // Save every 24 updates
         save_to_spiffs();
-   // }
+    }
 }
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -402,42 +399,6 @@ esp_err_t send_data(httpd_req_t *req) { //  This function send data to the websi
     
     return ESP_OK;
 }
-/*esp_err_t send_datagraf(httpd_req_t *req) {
-    // Set content type to application/json
-    httpd_resp_set_type(req, "application/json");
-    // Set cache control to no-cache
-    httpd_resp_set_hdr(req, "Cache-Control", "no-cache");
-    
-    // Construct the JSON string
-    char json_buf[1024]; // Adjust buffer size as needed
-    snprintf(json_buf, sizeof(json_buf), "{\"temperature\": [");
-    for (int i = 0; i < NUM_VALUES_PER_DAY; i++) {
-        snprintf(json_buf + strlen(json_buf), sizeof(json_buf) - strlen(json_buf), "%d", temperaturegraf[i]);
-        if (i < NUM_VALUES_PER_DAY - 1) {
-            strncat(json_buf, ",", sizeof(json_buf) - strlen(json_buf));
-        }
-    }
-    strncat(json_buf, "],\"humidity\": [", sizeof(json_buf) - strlen(json_buf));
-    for (int i = 0; i < NUM_VALUES_PER_DAY; i++) {
-        snprintf(json_buf + strlen(json_buf), sizeof(json_buf) - strlen(json_buf), "%d", humiditygraf[i]);
-        if (i < NUM_VALUES_PER_DAY - 1) {
-            strncat(json_buf, ",", sizeof(json_buf) - strlen(json_buf));
-        }
-    }
-    strncat(json_buf, "],\"humidity_land\": [", sizeof(json_buf) - strlen(json_buf));
-    for (int i = 0; i < NUM_VALUES_PER_DAY; i++) {
-        snprintf(json_buf + strlen(json_buf), sizeof(json_buf) - strlen(json_buf), "%d", humidity_landgraf[i]);
-        if (i < NUM_VALUES_PER_DAY - 1) {
-            strncat(json_buf, ",", sizeof(json_buf) - strlen(json_buf));
-        }
-    }
-    strncat(json_buf, "]}", sizeof(json_buf) - strlen(json_buf));
-
-    // Send the JSON
-    httpd_resp_send(req, json_buf, strlen(json_buf));
-    
-    return ESP_OK;
-}*/
 esp_err_t send_datagraf(httpd_req_t *req) {
     // Set content type to application/json
     httpd_resp_set_type(req, "application/json");
