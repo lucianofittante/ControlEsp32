@@ -1,85 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>ESP32 DESDE SPIFFS</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="data:,">
-    <link rel="stylesheet" type="text/css" href="/style.css">
     <meta charset="UTF-8">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data monitoring Greenhouse</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="left-container">
-            <h1>VALORES</h1>
-            <table>
-                <tbody>
-                    <tr>
-                        <td><strong>Temperatura:</strong> <span id="temperature"></span>°C</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Humedad Amb:</strong> <span id="humidity"></span>%</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Humedad Suelo:</strong> <span id="humedadsuelo"></span>%</td>
-                    </tr>
-                    <tr>
-                        <td><p><a href="#" onclick="toggleRegar()"><button class="Button ButtonG">Regar</button></a></p></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Regando:</strong> <div id="regar"></div></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Alarma riego:</strong> <div id="alarmariego"></div></td>
-                    </tr>
-                    <tr>
-                        <td><strong>TIEMPO:</strong> <div id="current_time"></div></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="right-container">
-            <h2>Diario</h2>
-            <select id="chartSelector" onchange="updateChartVisibility()">
-                <option value="temperature">Temperature</option>
-                <option value="humidity">Humidity</option>
-                <option value="humidityLand">Soil Humidity</option>
-            </select>
-            <div class="chart-container">
-                <canvas id="temperatureChart" width="400" height="350"></canvas>
-                <canvas id="humidityChart" width="400" height="350" style="display:none;"></canvas>
-                <canvas id="humidityLandChart" width="400" height="350" style="display:none;"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="full-chart-container">
-        <h2>Historico 4 dias</h2>
-        <canvas id="fullDataChart" width="600" height="200"></canvas>
-    </div>
-    <script src="code.js"></script>
-    <script>
-        function updateChartVisibility() {
-            const temperatureChart = document.getElementById('temperatureChart');
-            const humidityChart = document.getElementById('humidityChart');
-            const humidityLandChart = document.getElementById('humidityLandChart');
-            const selectedChart = document.getElementById('chartSelector').value;
-
-            temperatureChart.style.display = 'none';
-            humidityChart.style.display = 'none';
-            humidityLandChart.style.display = 'none';
-
-            switch (selectedChart) {
-                case 'temperature':
-                    temperatureChart.style.display = 'block';
-                    break;
-                case 'humidity':
-                    humidityChart.style.display = 'block';
-                    break;
-                case 'humidityLand':
-                    humidityLandChart.style.display = 'block';
-                    break;
-            }
-        }
-    </script>
+    <main>
+        <h1>MONITORING</h1>
+        <p>Visualization</p>
+        <hr>
+        <section class="cols-2">
+            <figure>
+                <h2>Current Values</h2>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><strong>Temperature:</strong> <span id="temperature"></span>°C</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Humidity:</strong> <span id="humidity"></span>%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Humidity Soil:</strong> <span id="humedadsuelo"></span>%</td>
+                        </tr>
+                        <tr>
+                            <td><p><a href="#" onclick="toggleRegar()"><button class="Button ButtonG">Regar</button></a></p></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Water:</strong> <div id="regar"></div></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Watering alarm:</strong> <div id="alarmariego"></div></td>
+                        </tr>
+                        <tr>
+                            <td><strong>TIME:</strong> <div id="current_time"></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </figure>
+            <figure>
+                <h2>
+                    <select id="featuresOptions" onchange="fetchDataPartial()">
+                        <option value="height">Soil Humidity</option>
+                        <option value="length">Humidity</option>
+                        <option value="width">Temperature</option>
+                    </select>
+                </h2>
+                <canvas id="temperatureChart"></canvas>
+            </figure>
+        </section>
+        <section class="cols-1">
+            <figure>
+                <h2>Extendido</h2>
+                <canvas id="yearsChart" width="500" height="300"></canvas>
+            </figure>
+        </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

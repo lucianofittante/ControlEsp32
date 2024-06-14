@@ -130,8 +130,8 @@ struct dht11_reading dht11_data;
 
 
 #define FILE_PATH "/storage/data.json"
-#define NUM_VALUES 96 // Assuming you have 96 values stored
-#define VALUES_TO_SEND 24 // Send the last 24 values
+#define NUM_VALUES 96 
+#define VALUES_TO_SEND 24 
 
 
 int temperaturegraf[NUM_VALUES_PER_DAY];
@@ -845,7 +845,7 @@ esp_err_t read_style(char **html_content, size_t *html_size)
 }
 esp_err_t read_codejs(char **html_content, size_t *html_size)
 {
-    FILE *file = fopen("/storage/code.js", "rb");
+    FILE *file = fopen("/storage/app.js", "rb");
     if (file == NULL)
     {
         ESP_LOGE(TAG, "Error al abrir el archivo style.css");
@@ -1154,7 +1154,7 @@ void http_server_task(void *pvParameter)
                     httpd_register_uri_handler(server, &post_uri);
                                                                  
                     httpd_uri_t root_codejs = {
-                        .uri = "/code.js",
+                        .uri = "/app.js",
                         .method = HTTP_GET,
                         .handler = root_codejs_handler,
                         .user_ctx = NULL

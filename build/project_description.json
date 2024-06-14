@@ -1,7 +1,7 @@
 {
     "version":            "1",
     "project_name":       "project-name",
-    "project_version":    "57a3aee-dirty",
+    "project_version":    "31a4141-dirty",
     "project_path":       "C:/Users/lucho/Desktop/ReparandoSTA/project-name",
     "idf_path":           "C:/ESP/Espressif/frameworks/esp-idf-v5.1.2",
     "build_dir":          "C:/Users/lucho/Desktop/ReparandoSTA/project-name/build",
